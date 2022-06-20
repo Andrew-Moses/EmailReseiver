@@ -5,7 +5,7 @@ namespace EmailReseiver.Contexts
     public class Context: DbContext
     {
         public Context(DbContextOptions<Context> options) : base(options) { }
-        public DbSet<Xmls> Xmls { get; set; }
-        
+        public DbSet<ImportData> ImportData { get; set; }
+
     }
 }

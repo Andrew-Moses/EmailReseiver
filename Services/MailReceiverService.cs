@@ -70,28 +70,35 @@ namespace EmailReseiver.MailServices
                                     var part = (MimePart)await client.Inbox.GetBodyPartAsync(msg.UniqueId, att);
                                     if (!part.FileName.EndsWith("xlsx")) continue;
 
-                                    Xmls xmls = new();
-                                    xmls.UniqueId = msg.UniqueId.ToString();
-                                    xmls.FileName = part.FileName;
 
+                                    ImportData importData = new ();
 
                                     Stream outStream = new MemoryStream();
                                     await part.Content.DecodeToAsync(outStream);
                                     outStream.Position = 0;
-/*
-                                    string fileName = String.Format(@"{0}.xlsx", System.Guid.NewGuid());
-                                    await using var inputStream = File.Create(fileName);
-                                    await part.Content.DecodeToAsync(inputStream);
-                                    inputStream.Close();
+                                    /*
+                                                                        string fileName = String.Format(@"{0}.xlsx", System.Guid.NewGuid());
+                                                                        await using var inputStream = File.Create(fileName);
+                                                                        await part.Content.DecodeToAsync(inputStream);
+                                                                        inputStream.Close();
+                                                                        Spreadsheet document = new Spreadsheet();
+                                                                        document.LoadFromFile(fileName);
+                                                                        document.Workbook.Worksheets[0].SaveAsXML(outStream);
+                                                                        outStream.Position = 0;
+                                    */
                                     Spreadsheet document = new Spreadsheet();
-                                    document.LoadFromFile(fileName);
-                                    document.Workbook.Worksheets[0].SaveAsXML(outStream);
-                                    outStream.Position = 0;
-*/
-                                    xmls.FileContent = StreamToString(outStream);
+                                    document.LoadFromStream(outStream);
+                                    var sheet = document.Workbook.Worksheets[0];
+                                    var rows = sheet.Rows;
+                                    foreach (var row in rows)
+                                    {
 
-                                    // пишем в базу
-                                    await _dataBaseService.AddEntry(xmls);
+                                    }
+
+
+
+                                    // запись в базу
+                                    // await _dataBaseService.AddEntry(importData);
                                 }
                             }
                         }

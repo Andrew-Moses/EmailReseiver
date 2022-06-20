@@ -12,7 +12,7 @@ namespace EmailReseiver.MailServices
         {
             _context = context;
         }
-        public async Task<Xmls?> AddEntry(Xmls entry)
+        public async Task<ImportData?> AddEntry(ImportData entry)
         {
             entry.InsertDate = DateTime.Now;
             await _context.AddAsync(entry);
@@ -20,8 +20,8 @@ namespace EmailReseiver.MailServices
             return await FindItem(entry.Id);
         }
  
-        public Task<Xmls?> FindItem(int id) => 
-            _context.Xmls.AsNoTracking()
+        public Task<ImportData?> FindItem(int id) => 
+            _context.ImportData.AsNoTracking()
                 .FirstOrDefaultAsync(i => i.Id == id);
         private readonly Context _context;
     }
