@@ -35,9 +35,9 @@ namespace EmailReseiver.MailServices
 
             IServiceCollection services = new ServiceCollection();
             services.AddDbContext<Context>(options => options.UseSqlServer(connectionString));
-            services.AddScoped<DataBaseService>();
+            services.AddScoped<ImportDataService>();
             var provider = services.BuildServiceProvider().CreateScope();
-            _dataBaseService = provider.ServiceProvider.GetRequiredService<DataBaseService>();
+            _importDataService = provider.ServiceProvider.GetRequiredService<ImportDataService>();
         }
 
         public async Task DoReceiveMail()
@@ -71,39 +71,49 @@ namespace EmailReseiver.MailServices
                                     if (!part.FileName.EndsWith("xlsx")) continue;
 
 
-                                    ImportData importData = new ();
 
                                     Stream outStream = new MemoryStream();
                                     await part.Content.DecodeToAsync(outStream);
                                     outStream.Position = 0;
-                                    /*
-                                                                        string fileName = String.Format(@"{0}.xlsx", System.Guid.NewGuid());
-                                                                        await using var inputStream = File.Create(fileName);
-                                                                        await part.Content.DecodeToAsync(inputStream);
-                                                                        inputStream.Close();
-                                                                        Spreadsheet document = new Spreadsheet();
-                                                                        document.LoadFromFile(fileName);
-                                                                        document.Workbook.Worksheets[0].SaveAsXML(outStream);
-                                                                        outStream.Position = 0;
-                                    */
                                     Spreadsheet document = new Spreadsheet();
                                     document.LoadFromStream(outStream);
                                     var sheet = document.Workbook.Worksheets[0];
-                                    var rows = sheet.Rows;
-                                    foreach (var row in rows)
+
+                                    for (int row = 1; sheet.Cell(row, 0).ValueAsString != ""; row++)
                                     {
 
+                                        ImportData importData = new ImportData
+                                        {
+                                            OrgName = sheet.Cell(row, 0).ValueAsString,
+                                            MOD = sheet.Cell(row, 1).ValueAsString,
+                                            ProductName = sheet.Cell(row, 2).ValueAsString,
+                                            SeriaNum = sheet.Cell(row, 3).ValueAsString,
+                                            MNN = sheet.Cell(row, 4).ValueAsString,
+                                            RecNum = sheet.Cell(row, 5).ValueAsString,
+                                            RecDate = sheet.Cell(row, 6).ValueAsDateTime,
+                                            MedForm = sheet.Cell(row, 7).ValueAsString,
+                                            Quant = (decimal)sheet.Cell(row, 8).ValueAsDouble,
+                                            OkeiName = sheet.Cell(row, 9).ValueAsString,
+                                            Price = (decimal)sheet.Cell(row, 10).ValueAsDouble,
+                                            PSum = (decimal)sheet.Cell(row, 11).ValueAsDouble,
+                                            LastName = sheet.Cell(row, 12).ValueAsString,
+                                            Name = sheet.Cell(row, 13).ValueAsString,
+                                            MidName = sheet.Cell(row, 14).ValueAsString,
+                                            DateOB = sheet.Cell(row, 15).ValueAsDateTime,
+                                            SNILS = sheet.Cell(row, 16).ValueAsInteger
+                                        };
+
+
+                                        // запись в базу
+                                        ImportData? _ = await _importDataService.AddEntry(importData);
+
                                     }
-
-
-
-                                    // запись в базу
-                                    // await _dataBaseService.AddEntry(importData);
                                 }
                             }
                         }
-                    }
+                        // TODO: где-то здесь удалить почту из ящика или как-то запомнить uids, чтобы больше их не считывать
 
+                    }
                     //ждем полминуты до следующего цикла
                     await Task.Delay(30000);
                 }
@@ -123,6 +133,6 @@ namespace EmailReseiver.MailServices
             }
         }
 
-        private DataBaseService _dataBaseService;
+        private ImportDataService _importDataService;
     }
 }
