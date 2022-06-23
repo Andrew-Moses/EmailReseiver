@@ -8,7 +8,7 @@ namespace EmailReseiver.Models
 {
     public class ImportData
     {
-        public int Id { get; set; }
+        public Int64 Id { get; set; }
         public string? OrgName { get; set; }
         public string? MOD { get; set; }
         public string? ProductName { get; set; }
@@ -25,7 +25,7 @@ namespace EmailReseiver.Models
         public string? Name { get; set; }
         public string? MidName { get; set; }
         public DateTime DateOB { get; set; }
-        public decimal SNILS { get; set; }
+        public string? SNILS { get; set; }
         public DateTime InsertDate { get; set; }
 
 

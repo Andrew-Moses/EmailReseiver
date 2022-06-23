@@ -43,8 +43,8 @@ namespace EmailReseiver.MailServices
         public async Task DoReceiveMail()
         {
             var list = new List<MailItem>();
-            var yandexUser = Configuration["YandexUser"];
-            var yandexPass = Configuration["YandexPass"];
+            var yandexUser = Configuration["YandexUser"]; 
+            var yandexPass = Configuration["YandexPass"]; 
             try
             {
                 while (true)
@@ -54,9 +54,9 @@ namespace EmailReseiver.MailServices
                         await client.ConnectAsync("imap.yandex.ru", 993, true);
                         await client.AuthenticateAsync(yandexUser, yandexPass);
 
-                        await client.Inbox.OpenAsync(MailKit.FolderAccess.ReadOnly);
+                        await client.Inbox.OpenAsync(MailKit.FolderAccess.ReadWrite);
 
-                        var uids = await client.Inbox.SearchAsync(SearchQuery.SentSince(DateTime.Now.AddDays(-7)));
+                        var uids = await client.Inbox.SearchAsync(MailKit.Search.SearchQuery.NotSeen);
 
                         var messages = await client.Inbox.FetchAsync(uids,
                             MessageSummaryItems.Envelope | MessageSummaryItems.BodyStructure);
@@ -65,6 +65,8 @@ namespace EmailReseiver.MailServices
                         {
                             foreach (var msg in messages)
                             {
+                                client.Inbox.AddFlags(uids, MailKit.MessageFlags.Seen, true);
+
                                 foreach (var att in msg.Attachments.OfType<BodyPartBasic>())
                                 {
                                     var part = (MimePart)await client.Inbox.GetBodyPartAsync(msg.UniqueId, att);
@@ -78,6 +80,8 @@ namespace EmailReseiver.MailServices
                                     Spreadsheet document = new Spreadsheet();
                                     document.LoadFromStream(outStream);
                                     var sheet = document.Workbook.Worksheets[0];
+
+                                    //client.Inbox.AddFlags(uids, MailKit.MessageFlags.Seen, { Silent = true});
 
                                     for (int row = 1; sheet.Cell(row, 0).ValueAsString != ""; row++)
                                     {
@@ -100,21 +104,21 @@ namespace EmailReseiver.MailServices
                                             Name = sheet.Cell(row, 13).ValueAsString,
                                             MidName = sheet.Cell(row, 14).ValueAsString,
                                             DateOB = sheet.Cell(row, 15).ValueAsDateTime,
-                                            SNILS = sheet.Cell(row, 16).ValueAsInteger
+                                            SNILS = sheet.Cell(row, 16).ValueAsString
                                         };
 
 
-                                        // запись в базу
+                                        // Запись в базу (dbo.ImportData)
                                         ImportData? _ = await _importDataService.AddEntry(importData);
 
                                     }
                                 }
                             }
                         }
-                        // TODO: где-то здесь удалить почту из ящика или как-то запомнить uids, чтобы больше их не считывать
-
+                        // TODO: где-то здесь удалить письмо из ящика или как-то запомнить uids, чтобы больше их не считывать
+                        
                     }
-                    //ждем полминуты до следующего цикла
+                    //ожиадание полминуты до следующего цикла
                     await Task.Delay(30000);
                 }
             }
