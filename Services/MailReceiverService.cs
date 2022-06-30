@@ -14,6 +14,7 @@ using Microsoft.Extensions.Configuration;
 using MimeKit;
 using MessageSummaryItems = MailKit.MessageSummaryItems;
 using Bytescout.Spreadsheet;
+using System.Text.RegularExpressions;
 
 
 namespace EmailReseiver.MailServices
@@ -38,6 +39,15 @@ namespace EmailReseiver.MailServices
             services.AddScoped<ImportDataService>();
             var provider = services.BuildServiceProvider().CreateScope();
             _importDataService = provider.ServiceProvider.GetRequiredService<ImportDataService>();
+        }
+
+        public static void CustomReplace(ImportData importData)
+        {
+           var obj_1 = Regex.Replace(importData.Quant.ToString(),"[.]",",") ;
+           //var obj_2 = Regex.Replace(importData.Price.ToString(),"[.]",",") ;
+           //var obj_3 = Regex.Replace(importData.PSum.ToString(),"[.]",",") ;
+
+
         }
 
         public async Task DoReceiveMail()
@@ -70,7 +80,8 @@ namespace EmailReseiver.MailServices
                                 foreach (var att in msg.Attachments.OfType<BodyPartBasic>())
                                 {
                                     var part = (MimePart)await client.Inbox.GetBodyPartAsync(msg.UniqueId, att);
-                                    if (!part.FileName.EndsWith("xlsx")) continue;
+                                    //if (!part.FileName.EndsWith("xlsx") || !part.FileName.EndsWith("xls")) continue;
+                                    if (Regex.IsMatch(part.FileName, "XLSX") || Regex.IsMatch(part.FileName, "XLS")) continue;
 
 
 
@@ -90,27 +101,33 @@ namespace EmailReseiver.MailServices
                                         {
                                             OrgName = sheet.Cell(row, 0).ValueAsString,
                                             MOD = sheet.Cell(row, 1).ValueAsString,
-                                            ProductName = sheet.Cell(row, 2).ValueAsString,
-                                            SeriaNum = sheet.Cell(row, 3).ValueAsString,
-                                            MNN = sheet.Cell(row, 4).ValueAsString,
-                                            RecNum = sheet.Cell(row, 5).ValueAsString,
-                                            RecDate = sheet.Cell(row, 6).ValueAsDateTime,
-                                            MedForm = sheet.Cell(row, 7).ValueAsString,
-                                            Quant = (decimal)sheet.Cell(row, 8).ValueAsDouble,
-                                            OkeiName = sheet.Cell(row, 9).ValueAsString,
-                                            Price = (decimal)sheet.Cell(row, 10).ValueAsDouble,
-                                            PSum = (decimal)sheet.Cell(row, 11).ValueAsDouble,
-                                            LastName = sheet.Cell(row, 12).ValueAsString,
-                                            Name = sheet.Cell(row, 13).ValueAsString,
-                                            MidName = sheet.Cell(row, 14).ValueAsString,
-                                            DateOB = sheet.Cell(row, 15).ValueAsDateTime,
-                                            SNILS = sheet.Cell(row, 16).ValueAsString
+                                            INN = sheet.Cell(row, 2).ValueAsString,
+                                            OKPO = sheet.Cell(row, 3).ValueAsString,
+                                            FinancingItem = sheet.Cell(row, 4).ValueAsString,
+                                            ProductName = sheet.Cell(row, 5).ValueAsString,
+                                            MedForm = sheet.Cell(row, 6).ValueAsString,
+                                            SeriaNum = sheet.Cell(row, 7).ValueAsString,
+                                            MNN = sheet.Cell(row, 8).ValueAsString,
+                                            MKB = sheet.Cell(row, 9).ValueAsString,
+                                            RecSeria = sheet.Cell(row, 10).ValueAsString,
+                                            RecNum = sheet.Cell(row, 11).ValueAsString,
+                                            RecDate = sheet.Cell(row, 12).ValueAsDateTime,
+                                            OtpuskDate = sheet.Cell(row, 13).ValueAsDateTime,
+                                            Quant = (decimal)sheet.Cell(row, 14).ValueAsDouble,
+                                            OkeiName = sheet.Cell(row, 15).ValueAsString,
+                                            Price = (decimal)sheet.Cell(row, 16).ValueAsDouble,
+                                            PSum = (decimal)sheet.Cell(row, 17).ValueAsDouble,
+                                            LastName = sheet.Cell(row, 18).ValueAsString,
+                                            Name = sheet.Cell(row, 19).ValueAsString,
+                                            MidName = sheet.Cell(row, 20).ValueAsString,
+                                            DateOB = sheet.Cell(row, 21).ValueAsDateTime,
+                                            SNILS = sheet.Cell(row, 22).ValueAsString
                                         };
-
-
+                                        //Console.WriteLine(importData.Quant);
+                                        //CustomReplace(importData);
                                         // Запись в базу (dbo.ImportData)
                                         ImportData? _ = await _importDataService.AddEntry(importData);
-
+                                      
                                     }
                                 }
                             }
