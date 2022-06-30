@@ -35,32 +35,6 @@ namespace EmailReseiver.Models
         public DateTime InsertDate { get; set; }
 
 
-        //public string Id { get; set; }
-        //public string? OrgName { get; set; }
-        //public string? MOD { get; set; }
-        //public string INN { get; set; }
-        //public string OKPO { get; set; }
-        //public string FinancingItem { get; set; }
-        //public string? ProductName { get; set; }
-        //public string? MedForm { get; set; }
-        //public string? SeriaNum { get; set; }
-        //public string? MNN { get; set; }
-        //public string MKB { get; set; }
-        //public string RecSeria { get; set; }
-        //public string? RecNum { get; set; }
-        //public string RecDate { get; set; }
-        //public string OtpuskDate { get; set; }
-        //public string Quant { get; set; }
-        //public string? OkeiName { get; set; }
-        //public string Price { get; set; }
-        //public string PSum { get; set; }
-        //public string? LastName { get; set; }
-        //public string? Name { get; set; }
-        //public string? MidName { get; set; }
-        //public string DateOB { get; set; }
-        //public string? SNILS { get; set; }
-        //public string InsertDate { get; set; }
-
 
     }
 }
