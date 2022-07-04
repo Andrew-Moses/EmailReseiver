@@ -96,38 +96,12 @@ namespace EmailReseiver.MailServices
 
                                     for (int row = 1; sheet.Cell(row, 0).ValueAsString != ""; row++)
                                     {
-
-                                        ImportData importData = new ImportData
-                                        {
-                                            OrgName = sheet.Cell(row, 0).ValueAsString,
-                                            MOD = sheet.Cell(row, 1).ValueAsString,
-                                            INN = sheet.Cell(row, 2).ValueAsString,
-                                            OKPO = sheet.Cell(row, 3).ValueAsString,
-                                            FinancingItem = sheet.Cell(row, 4).ValueAsString,
-                                            ProductName = sheet.Cell(row, 5).ValueAsString,
-                                            MedForm = sheet.Cell(row, 6).ValueAsString,
-                                            SeriaNum = sheet.Cell(row, 7).ValueAsString,
-                                            MNN = sheet.Cell(row, 8).ValueAsString,
-                                            MKB = sheet.Cell(row, 9).ValueAsString,
-                                            RecSeria = sheet.Cell(row, 10).ValueAsString,
-                                            RecNum = sheet.Cell(row, 11).ValueAsString,
-                                            RecDate = sheet.Cell(row, 12).ValueAsDateTime,
-                                            OtpuskDate = sheet.Cell(row, 13).ValueAsDateTime,
-                                            Quant = (decimal)sheet.Cell(row, 14).ValueAsDouble,
-                                            OkeiName = sheet.Cell(row, 15).ValueAsString,
-                                            Price = (decimal)sheet.Cell(row, 16).ValueAsDouble,
-                                            PSum = (decimal)sheet.Cell(row, 17).ValueAsDouble,
-                                            LastName = sheet.Cell(row, 18).ValueAsString,
-                                            Name = sheet.Cell(row, 19).ValueAsString,
-                                            MidName = sheet.Cell(row, 20).ValueAsString,
-                                            DateOB = sheet.Cell(row, 21).ValueAsDateTime,
-                                            SNILS = sheet.Cell(row, 22).ValueAsString
-                                        };
+                                        ImportData importData = getData(sheet, row);
                                         //Console.WriteLine(importData.Quant);
                                         //CustomReplace(importData);
                                         // Запись в базу (dbo.ImportData)
                                         ImportData? _ = await _importDataService.AddEntry(importData);
-                                      
+
                                     }
                                 }
                             }
@@ -143,6 +117,39 @@ namespace EmailReseiver.MailServices
             {
                 Console.WriteLine(ex);
             }
+        }
+
+        private ImportData getData(Worksheet sheet, int row)
+        {
+            decimal quant = Convert.ToDecimal(sheet.Cell(row, 14).ValueAsString.Replace('.', ','));
+            decimal price = Convert.ToDecimal(sheet.Cell(row, 16).ValueAsString.Replace('.', ','));
+            decimal pSum = Convert.ToDecimal(sheet.Cell(row, 17).ValueAsString.Replace('.', ','));
+            return new()
+            {
+                OrgName = sheet.Cell(row, 0).ValueAsString,
+                MOD = sheet.Cell(row, 1).ValueAsString,
+                INN = sheet.Cell(row, 2).ValueAsString,
+                OKPO = sheet.Cell(row, 3).ValueAsString,
+                FinancingItem = sheet.Cell(row, 4).ValueAsString,
+                ProductName = sheet.Cell(row, 5).ValueAsString,
+                MedForm = sheet.Cell(row, 6).ValueAsString,
+                SeriaNum = sheet.Cell(row, 7).ValueAsString,
+                MNN = sheet.Cell(row, 8).ValueAsString,
+                MKB = sheet.Cell(row, 9).ValueAsString,
+                RecSeria = sheet.Cell(row, 10).ValueAsString,
+                RecNum = sheet.Cell(row, 11).ValueAsString,
+                RecDate = sheet.Cell(row, 12).ValueAsDateTime,
+                OtpuskDate = sheet.Cell(row, 13).ValueAsDateTime,
+                Quant = quant,
+                OkeiName = sheet.Cell(row, 15).ValueAsString,
+                Price = price,
+                PSum = pSum,
+                LastName = sheet.Cell(row, 18).ValueAsString,
+                Name = sheet.Cell(row, 19).ValueAsString,
+                MidName = sheet.Cell(row, 20).ValueAsString,
+                DateOB = sheet.Cell(row, 21).ValueAsDateTime,
+                SNILS = sheet.Cell(row, 22).ValueAsString
+            };
         }
 
         public static string StreamToString(Stream stream)
