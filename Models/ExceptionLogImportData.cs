@@ -6,13 +6,13 @@ using System.Threading.Tasks;
 
 namespace EmailReseiver.Models
 {
-    public class tblExceptionLog
+    public class ExceptionLogImportData
     {
         public Int64 Id { get; set; }
         public DateTime LoggedDate { get; set; } = DateTime.Now;
         public string? MsgFrom {  get; set; }
         public string? MsgSubj {  get; set; }
-        public string? MsgHasAttachment {  get; set; }
+        public bool MsgHasAttachment {  get; set; }
               
     }
 }

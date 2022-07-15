@@ -13,7 +13,7 @@ namespace EmailReseiver.Services
             _context = context;
         }
 
-        public async Task<tblExceptionLog?> AddEntry(tblExceptionLog entry)
+        public async Task<ExceptionLogImportData?> AddEntry(ExceptionLogImportData entry)
         {
             entry.LoggedDate = DateTime.Now;
             await _context.AddAsync(entry);
@@ -21,8 +21,8 @@ namespace EmailReseiver.Services
             return await FindItem(entry.Id);
         }
 
-        public Task<tblExceptionLog?> FindItem(Int64 id) =>
-            _context.tblExceptionLog.AsNoTracking()
+        public Task<ExceptionLogImportData?> FindItem(Int64 id) =>
+            _context.ExceptionLogImportData.AsNoTracking()
                 .FirstOrDefaultAsync(i => i.Id == id);
         private readonly Context _context;
     }
