@@ -6,6 +6,7 @@ namespace EmailReseiver.Contexts
     {
         public Context(DbContextOptions<Context> options) : base(options) { }
         public DbSet<ImportData> ImportData { get; set; }
+        public DbSet<tblExceptionLog> tblExceptionLog { get; set; }
 
     }
 }

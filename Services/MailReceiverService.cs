@@ -15,14 +15,16 @@ using MimeKit;
 using MessageSummaryItems = MailKit.MessageSummaryItems;
 using Bytescout.Spreadsheet;
 using System.Text.RegularExpressions;
-
+using System.Data.SqlClient;
+using System.Data;
+using EmailReseiver.Services;
 
 namespace EmailReseiver.MailServices
 {
     public class MailReceiverService
     {
         public IConfiguration Configuration { get; }
-
+        public List<MailItem> listOfMessages = new List<MailItem>();
         public MailReceiverService()
         {
             var builder = new ConfigurationBuilder()
@@ -37,28 +39,31 @@ namespace EmailReseiver.MailServices
             IServiceCollection services = new ServiceCollection();
             services.AddDbContext<Context>(options => options.UseSqlServer(connectionString));
             services.AddScoped<ImportDataService>();
+            services.AddScoped<LogService>();
             var provider = services.BuildServiceProvider().CreateScope();
             _importDataService = provider.ServiceProvider.GetRequiredService<ImportDataService>();
+            _logService = provider.ServiceProvider.GetRequiredService<LogService>();
         }
 
-        public static void CustomReplace(ImportData importData)
-        {
-           var obj_1 = Regex.Replace(importData.Quant.ToString(),"[.]",",") ;
-           //var obj_2 = Regex.Replace(importData.Price.ToString(),"[.]",",") ;
-           //var obj_3 = Regex.Replace(importData.PSum.ToString(),"[.]",",") ;
+        public string getLetter(string financingItem)
+        { 
+            if (Regex.IsMatch(financingItem, "Смеш", RegexOptions.IgnoreCase)) return "201";
+            if (Regex.IsMatch(financingItem, "регион", RegexOptions.IgnoreCase)) return "202";
+            if (Regex.IsMatch(financingItem, "федера", RegexOptions.IgnoreCase)) return "203";
 
-
+            return "";
         }
 
-        public async Task DoReceiveMail()
-        {
-            var list = new List<MailItem>();
+        public async Task<List<MailItem>> DoReceiveMail()
+        {  
             var yandexUser = Configuration["YandexUser"]; 
-            var yandexPass = Configuration["YandexPass"]; 
+            var yandexPass = Configuration["YandexPass"];
+
             try
             {
                 while (true)
                 {
+                
                     using (var client = new MailKit.Net.Imap.ImapClient())
                     {
                         await client.ConnectAsync("imap.yandex.ru", 993, true);
@@ -77,12 +82,19 @@ namespace EmailReseiver.MailServices
                             {
                                 client.Inbox.AddFlags(uids, MailKit.MessageFlags.Seen, true);
 
+                                listOfMessages.Add(new MailItem
+                                {
+                                    Date = msg.Date.ToString(),
+                                    From = msg.Envelope.From.ToString(),
+                                    Subj = msg.Envelope.Subject,
+                                    HasAttachments = msg.Attachments != null && msg.Attachments.Count() > 0,
+                                });
+
                                 foreach (var att in msg.Attachments.OfType<BodyPartBasic>())
                                 {
                                     var part = (MimePart)await client.Inbox.GetBodyPartAsync(msg.UniqueId, att);
-                                    //if (!part.FileName.EndsWith("xlsx") || !part.FileName.EndsWith("xls")) continue;
+                                    
                                     if (Regex.IsMatch(part.FileName, "XLSX") || Regex.IsMatch(part.FileName, "XLS")) continue;
-
 
 
                                     Stream outStream = new MemoryStream();
@@ -92,38 +104,69 @@ namespace EmailReseiver.MailServices
                                     document.LoadFromStream(outStream);
                                     var sheet = document.Workbook.Worksheets[0];
 
-                                    //client.Inbox.AddFlags(uids, MailKit.MessageFlags.Seen, { Silent = true});
+                                    //Cheking for empty rows in the top of document
+                                    int rowIndex = 0;
 
-                                    for (int row = 1; sheet.Cell(row, 0).ValueAsString != ""; row++)
+                                    for (int row = 0; row <= sheet.Rows.LastFormatedRow; row++)
                                     {
-                                        ImportData importData = getData(sheet, row);
-                                        //Console.WriteLine(importData.Quant);
-                                        //CustomReplace(importData);
-                                        // Запись в базу (dbo.ImportData)
-                                        ImportData? _ = await _importDataService.AddEntry(importData);
+                                        if (sheet.Cell(row, 0).ValueAsString != "")
+                                        {
+                                            rowIndex = row + 1;
+                                            break;
+                                        }
+                                    }
 
+                                    //Cheking for empty rows in the middle of document
+                                    for (int row = rowIndex; row<= sheet.Rows.LastFormatedRow; row++)
+                                    {
+
+                                        if(sheet.Cell(row, 0).ValueAsString == "")
+                                        {
+                                            for (int row_1 = 0; row_1 < 1000; row_1++)
+                                            {
+                                                if (sheet.Cell(row_1, 0).ValueAsString != "")
+                                                {
+                                                    row += row_1;
+                                                    break;
+                                                }
+                                            }
+                                        }
+                                        else
+                                        {
+                                            try
+                                            {
+                                                //Writing process to DataBase (dbo.ImportData)
+                                                ImportData importData = getData(sheet, row);
+                                                ImportData? _ = await _importDataService.AddEntry(importData);
+                                            }
+                                            catch (Exception ex)
+                                            {                                              
+                                                continue;
+                                            }  
+                                        }
                                     }
                                 }
                             }
                         }
-                        // TODO: где-то здесь удалить письмо из ящика или как-то запомнить uids, чтобы больше их не считывать
-                        
                     }
-                    //ожиадание полминуты до следующего цикла
+                    //Waiting period until next cycle (30 second)
                     await Task.Delay(30000);
                 }
             }
             catch (Exception ex)
-            {
+            {                
                 Console.WriteLine(ex);
             }
+            return listOfMessages;
         }
 
+        //Validate fields with a numeric value and convert semicolons if present
         private ImportData getData(Worksheet sheet, int row)
         {
             decimal quant = Convert.ToDecimal(sheet.Cell(row, 14).ValueAsString.Replace('.', ','));
             decimal price = Convert.ToDecimal(sheet.Cell(row, 16).ValueAsString.Replace('.', ','));
             decimal pSum = Convert.ToDecimal(sheet.Cell(row, 17).ValueAsString.Replace('.', ','));
+            string financeItem = getLetter(sheet.Cell(row, 4).ValueAsString);
             return new()
             {
                 OrgName = sheet.Cell(row, 0).ValueAsString,
@@ -148,7 +191,8 @@ namespace EmailReseiver.MailServices
                 Name = sheet.Cell(row, 19).ValueAsString,
                 MidName = sheet.Cell(row, 20).ValueAsString,
                 DateOB = sheet.Cell(row, 21).ValueAsDateTime,
-                SNILS = sheet.Cell(row, 22).ValueAsString
+                SNILS = sheet.Cell(row, 22).ValueAsString,
+                WorkSupplierDogovorId = financeItem,
             };
         }
 
@@ -162,5 +206,6 @@ namespace EmailReseiver.MailServices
         }
 
         private ImportDataService _importDataService;
+        private LogService _logService;
     }
 }

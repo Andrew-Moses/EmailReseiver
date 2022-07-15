@@ -13,7 +13,6 @@ namespace EmailReseiver.Models
         public string? MOD { get; set; }
         public string INN { get; set; }
         public string OKPO { get; set; }
-        public string FinancingItem { get; set; }
         public string? ProductName { get; set; }
         public string? MedForm { get; set; }
         public string? SeriaNum { get; set; }
@@ -33,8 +32,8 @@ namespace EmailReseiver.Models
         public DateTime DateOB { get; set; }
         public string? SNILS { get; set; }
         public DateTime InsertDate { get; set; }
+        public string FinancingItem { get; set; }
+        public string WorkSupplierDogovorId { get; set; }
 
-
-
-    }
+     }
 }
