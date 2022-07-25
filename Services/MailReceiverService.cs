@@ -39,10 +39,12 @@ namespace EmailReseiver.MailServices
             IServiceCollection services = new ServiceCollection();
             services.AddDbContext<Context>(options => options.UseSqlServer(connectionString));
             services.AddScoped<ImportDataService>();
+            services.AddScoped<ImportDataDuplicateService>();
             services.AddScoped<LogService>();
             var provider = services.BuildServiceProvider().CreateScope();
             _importDataService = provider.ServiceProvider.GetRequiredService<ImportDataService>();
             _logService = provider.ServiceProvider.GetRequiredService<LogService>();
+            _doublesService = provider.ServiceProvider.GetRequiredService<ImportDataDuplicateService>();
         }
 
         public string getLetter(string financingItem)
@@ -137,11 +139,20 @@ namespace EmailReseiver.MailServices
                                             {
                                                 //Writing process to DataBase (dbo.ImportData)
                                                 ImportData importData = getData(sheet, row);
-                                                ImportData? _ = await _importDataService.AddEntry(importData);
+                                                var isRecNumDouble = await _importDataService.IsRecNumExistAsync(importData.RecNum);
+                                                if (isRecNumDouble) 
+                                                {
+                                                    await _doublesService.AddEntry(importData);
+
+                                                }
+                                                else
+                                                {
+                                                    ImportData? _ = await _importDataService.AddEntry(importData);
+                                                }
                                             }
                                             catch (Exception ex)
-                                            {                                              
-                                                continue;
+                                            {
+                                                Console.WriteLine(ex);
                                             }  
                                         }
                                     }
@@ -206,6 +217,7 @@ namespace EmailReseiver.MailServices
         }
 
         private ImportDataService _importDataService;
+        private ImportDataDuplicateService _doublesService;
         private LogService _logService;
     }
 }

@@ -12,17 +12,18 @@ namespace EmailReseiver.Services
         {
             _context = context;
         }
-        public async Task<ImportDataDuplicate?> AddEntry(ImportDataDuplicate entry)
+        public async Task<ImportData?> AddEntry(ImportData entry)
         {
             entry.InsertDate = DateTime.Now;
-            await _context.AddAsync(entry);
+            await _context.ImportDataDuplicate.AddAsync(entry);
             await _context.SaveChangesAsync();
             return await FindItem(entry.Id);
         }
 
-        public Task<ImportDataDuplicate?> FindItem(Int64 id) =>
+        public Task<ImportData?> FindItem(Int64 id) =>
             _context.ImportDataDuplicate.AsNoTracking()
                 .FirstOrDefaultAsync(i => i.Id == id);
+
         private readonly Context _context;
     }
 }
