@@ -48,7 +48,7 @@ namespace EmailReseiver.MailServices
         }
 
         public string getLetter(string financingItem)
-        { 
+        {
             if (Regex.IsMatch(financingItem, "Смеш", RegexOptions.IgnoreCase)) return "201";
             if (Regex.IsMatch(financingItem, "регион", RegexOptions.IgnoreCase)) return "202";
             if (Regex.IsMatch(financingItem, "федера", RegexOptions.IgnoreCase)) return "203";
@@ -57,15 +57,15 @@ namespace EmailReseiver.MailServices
         }
 
         public async Task<List<MailItem>> DoReceiveMail()
-        {  
-            var yandexUser = Configuration["YandexUser"]; 
+        {
+            var yandexUser = Configuration["YandexUser"];
             var yandexPass = Configuration["YandexPass"];
 
             try
             {
                 while (true)
                 {
-                
+
                     using (var client = new MailKit.Net.Imap.ImapClient())
                     {
                         await client.ConnectAsync("imap.yandex.ru", 993, true);
@@ -82,7 +82,7 @@ namespace EmailReseiver.MailServices
                         {
                             foreach (var msg in messages)
                             {
-                                client.Inbox.AddFlags(uids, MailKit.MessageFlags.Seen, true);
+                                //client.Inbox.AddFlags(uids, MailKit.MessageFlags.Seen, true);
 
                                 listOfMessages.Add(new MailItem
                                 {
@@ -95,7 +95,7 @@ namespace EmailReseiver.MailServices
                                 foreach (var att in msg.Attachments.OfType<BodyPartBasic>())
                                 {
                                     var part = (MimePart)await client.Inbox.GetBodyPartAsync(msg.UniqueId, att);
-                                    
+
                                     if (Regex.IsMatch(part.FileName, "XLSX") || Regex.IsMatch(part.FileName, "XLS")) continue;
 
 
@@ -119,10 +119,10 @@ namespace EmailReseiver.MailServices
                                     }
 
                                     //Cheking for empty rows in the middle of document
-                                    for (int row = rowIndex; row<= sheet.Rows.LastFormatedRow; row++)
+                                    for (int row = rowIndex; row <= sheet.Rows.LastFormatedRow; row++)
                                     {
 
-                                        if(sheet.Cell(row, 0).ValueAsString == "")
+                                        if (sheet.Cell(row, 0).ValueAsString == "")
                                         {
                                             for (int row_1 = 0; row_1 < 1000; row_1++)
                                             {
@@ -140,9 +140,10 @@ namespace EmailReseiver.MailServices
                                                 //Writing process to DataBase (dbo.ImportData)
                                                 ImportData importData = getData(sheet, row);
                                                 var isRecNumDouble = await _importDataService.IsRecNumExistAsync(importData.RecNum);
-                                                if (isRecNumDouble) 
+                                                if (isRecNumDouble)
                                                 {
-                                                    await _doublesService.AddEntry(importData);
+                                                    var tmpData = (ImportDataDuplicate)importData;
+                                                    await _doublesService.AddEntry((ImportDataDuplicate)importData);
 
                                                 }
                                                 else
@@ -152,8 +153,9 @@ namespace EmailReseiver.MailServices
                                             }
                                             catch (Exception ex)
                                             {
+                                                //continue;
                                                 Console.WriteLine(ex);
-                                            }  
+                                            }
                                         }
                                     }
                                 }
@@ -165,7 +167,7 @@ namespace EmailReseiver.MailServices
                 }
             }
             catch (Exception ex)
-            {                
+            {
                 Console.WriteLine(ex);
             }
             return listOfMessages;

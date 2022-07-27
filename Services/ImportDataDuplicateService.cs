@@ -12,7 +12,7 @@ namespace EmailReseiver.Services
         {
             _context = context;
         }
-        public async Task<ImportData?> AddEntry(ImportData entry)
+        public async Task<ImportDataDuplicate?> AddEntry(ImportDataDuplicate entry)
         {
             entry.InsertDate = DateTime.Now;
             await _context.ImportDataDuplicate.AddAsync(entry);
@@ -20,7 +20,7 @@ namespace EmailReseiver.Services
             return await FindItem(entry.Id);
         }
 
-        public Task<ImportData?> FindItem(Int64 id) =>
+        public Task<ImportDataDuplicate?> FindItem(Int64 id) =>
             _context.ImportDataDuplicate.AsNoTracking()
                 .FirstOrDefaultAsync(i => i.Id == id);
 

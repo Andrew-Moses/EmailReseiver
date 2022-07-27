@@ -19,8 +19,8 @@ namespace EmailReseiver.MailServices
             await _context.SaveChangesAsync();
             return await FindItem(entry.Id);
         }
- 
-        public Task<ImportData?> FindItem(Int64 id) => 
+
+        public Task<ImportData?> FindItem(Int64 id) =>
             _context.ImportData.AsNoTracking()
                 .FirstOrDefaultAsync(i => i.Id == id);
         private readonly Context _context;
