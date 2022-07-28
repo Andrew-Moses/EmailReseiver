@@ -4,3 +4,6 @@ obj/
 /packages/
 riderModule.iml
 /_ReSharper.Caches/
+.vs/EmailReseiver/DesignTimeBuild/.dtbcache.v2
+.vs/EmailReseiver/v17/.futdcache.v1
+.vs/EmailReseiver/v17/.suo

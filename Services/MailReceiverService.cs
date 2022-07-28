@@ -142,9 +142,8 @@ namespace EmailReseiver.MailServices
                                                 var isRecNumDouble = await _importDataService.IsRecNumExistAsync(importData.RecNum);
                                                 if (isRecNumDouble)
                                                 {
-                                                    var tmpData = (ImportDataDuplicate)importData;
-                                                    await _doublesService.AddEntry((ImportDataDuplicate)importData);
-
+                                                    ImportDataDuplicate import = new(importData);
+                                                    await _doublesService.AddEntry(import);
                                                 }
                                                 else
                                                 {
